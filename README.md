@@ -4,18 +4,18 @@
 
 # Задание 1. Локальные ключевые точки SIFT (детектор и дескриптор)
 
-[![Build Status](https://travis-ci.com/PhotogrammetryCourse/PhotogrammetryTasks2023.svg?branch=task01)](https://travis-ci.com/PhotogrammetryCourse/PhotogrammetryTasks2023)
+[![Build Status](https://github.com/PhotogrammetryCourse/PhotogrammetryTasks2023/actions/workflows/cmake.yml/badge.svg?branch=task01&event=push)](https://github.com/PhotogrammetryCourse/PhotogrammetryTasks2023/actions/workflows/cmake.yml)
 
 0. Сделать fork проекта (обратите внимание что задание не в ветке **master**, а в ветке **task01**)
 1. [Установите OpenCV 4.5.1](https://github.com/PhotogrammetryCourse/PhotogrammetryTasks2023/blob/task01/CMakeLists.txt#L19-L31)
-2. Выполнить задания ниже (не используйте пожалуйста C++ из будущего о котором не знает GCC 5.5 - именно он будет использоваться при тестировании в Travis CI, ориентируйтесь на C++11)
+2. Выполнить задания ниже (не используйте пожалуйста C++ из будущего о котором не знает GCC 5.5 - именно он будет использоваться при тестировании в Github Actions CI, ориентируйтесь на C++11)
 3. Отправить **Pull-request** с названием```Task01 <Имя> <Фамилия> <Аффиляция>```:
 
  - Скопируйте в описание [шаблон](https://raw.githubusercontent.com/PhotogrammetryCourse/PhotogrammetryTasks2023/task01/.github/pull_request_template.md)
  - Обязательно отправляйте PR из вашей ветки **task01** (вашего форка) в ветку **task01** (основного репозитория)
  - Перечислите свои мысли по вопросам поднятым в коде и просто появившиеся в процессе выполнения задания (выписывайте их с самого начала в отдельный текстовый файл, в шаблоне предложены некоторые вопросы)
  - Создайте PR
- - Затем дождавшись отработку Travis CI (около 15 минут) - скопируйте в описание PR вывод исполнения вашей программы **на CI** (через редактирование описания PR)
+ - Затем дождавшись отработку Github Actions CI (около 15 минут) - скопируйте в описание PR вывод исполнения вашей программы **на CI** (через редактирование описания PR)
 
 **Мягкий дедлайн**: начало лекции 22 февраля. Мягкий дедлайн - ориентировочная рекомендация "здорово если успеете".
 

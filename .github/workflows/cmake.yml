@@ -1,0 +1,34 @@
+name: CMake
+
+on: [push, pull_request]
+
+env:
+  BUILD_TYPE: RelWithDebInfo
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install prerequisites
+        run: |
+          sudo apt update
+          sudo apt install -y g++-5
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 90
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 90
+          sudo apt install -y cmake
+
+      - name: Build and install OpenCV 4.5.1
+        run: sudo bash .github/scripts/install_opencv451.sh;
+
+      - name: Configure CMake
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+      - name: test_sift
+        working-directory: ${{github.workspace}}
+        run: ./build/test_sift
