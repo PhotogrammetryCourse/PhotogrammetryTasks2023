@@ -24,14 +24,14 @@
 9) За какой строки вашего кода дескриптор инвариантен к повороту картинки?
 
 // Создайте PR.
-// Дождитесь отработки Github Actions CI, после чего нажмите на зеленую галочку -> Details -> The build -> скопируйте весь лог тестирования.
+// Дождитесь отработки Github Actions CI, после чего нажмите на зеленую галочку -> Details -> test_sift -> скопируйте весь лог тестирования.
 // Откройте PR на редактирование (сверху справа три точки->Edit) и добавьте сюда скопированный лог тестирования внутри тега <pre> для сохранения форматирования и под спойлером для компактности и удобства:
 
 <details><summary>Github Actions CI</summary><p>
 
 <pre>
 $ ./build/test_sift
-Running main() from /home/travis/build/PhotogrammetryCourse/PhotogrammetryTasks2023/libs/3rdparty/libgtest/googletest/src/gtest_main.cc
+Running main() from /home/runner/work/PhotogrammetryTasks2023/PhotogrammetryTasks2023/libs/3rdparty/libgtest/googletest/src/gtest_main.cc
 [==========] Running 22 tests from 1 test suite.
 [----------] Global test environment set-up.
 [----------] 22 tests from SIFT
