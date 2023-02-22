@@ -48,7 +48,7 @@ set (LIBRARIES
         libclew
         libutils)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 if (GPU_CUDA_SUPPORT)
     find_package (CUDA REQUIRED)

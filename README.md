@@ -8,7 +8,7 @@
 
 0. Сделать fork проекта (обратите внимание что задание не в ветке **master**, а в ветке **task01**)
 1. [Установите OpenCV 4.5.1](https://github.com/PhotogrammetryCourse/PhotogrammetryTasks2023/blob/task01/CMakeLists.txt#L19-L31)
-2. Выполнить задания ниже (не используйте пожалуйста C++ из будущего о котором не знает GCC 5.5 - именно он будет использоваться при тестировании в Github Actions CI, ориентируйтесь на C++11)
+2. Выполнить задания ниже (при тестировании Github Actions CI использует GCC 11, поэтому если вы используете фичи свежее чем C++17 - есть риск что не скомпилируется, в таком случае поправьте пожалуйста)
 3. Отправить **Pull-request** с названием```Task01 <Имя> <Фамилия> <Аффиляция>```:
 
  - Скопируйте в описание [шаблон](https://raw.githubusercontent.com/PhotogrammetryCourse/PhotogrammetryTasks2023/task01/.github/pull_request_template.md)
