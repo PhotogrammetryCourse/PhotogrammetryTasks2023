@@ -21,6 +21,9 @@ jobs:
       - name: Build and install OpenCV 4.5.1
         run: sudo bash .github/scripts/install_opencv451.sh;
 
+      - name: Install OpenCL CPU driver
+        run: sudo bash .github/scripts/install_intel_opencl.sh;
+
       - name: Configure CMake
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
@@ -30,3 +33,7 @@ jobs:
       - name: test_sift
         working-directory: ${{github.workspace}}
         run: ./build/test_sift
+
+      - name: test_matching
+        working-directory: ${{github.workspace}}
+        run: ./build/test_matching

@@ -14,7 +14,7 @@
 namespace gpu {
 	void printDeviceInfo(gpu::Device &device);
 
-	gpu::Device chooseGPUDevice(int argc, char **argv);
+	gpu::Device chooseDevice(bool verbose=false);
 }
 
 namespace ocl {

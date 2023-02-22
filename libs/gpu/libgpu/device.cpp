@@ -33,6 +33,7 @@ std::vector<Device> enumDevices()
 		device.pci_device_id	= cuda_device.pci_device_id;
 		device.supports_opencl	= false;
 		device.supports_cuda	= true;
+		device.is_cpu			= false;
 		device.device_id_opencl	= 0;
 		device.device_id_cuda	= cuda_device.id;
 		devices.push_back(device);
@@ -57,6 +58,7 @@ std::vector<Device> enumDevices()
 		device.pci_device_id	= opencl_device.nvidia_pci_slot_id;
 		device.supports_opencl	= true;
 		device.supports_cuda	= false;
+		device.is_cpu			= (opencl_device.device_type == CL_DEVICE_TYPE_CPU);
 		device.device_id_opencl	= opencl_device.id;
 		device.device_id_cuda	= 0;
 		devices.push_back(device);

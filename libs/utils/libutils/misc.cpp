@@ -39,7 +39,7 @@ void gpu::printDeviceInfo(gpu::Device &device)
 }
 
 
-gpu::Device gpu::chooseGPUDevice(int argc, char **argv)
+gpu::Device gpu::chooseDevice(bool verbose)
 {
 	std::vector <gpu::Device> devices = gpu::enumDevices();
 	unsigned int device_index = std::numeric_limits<unsigned int>::max();
@@ -48,30 +48,31 @@ gpu::Device gpu::chooseGPUDevice(int argc, char **argv)
 		gpu::Device cpu_device;
 		cpu_device.supports_opencl = false;
 		cpu_device.supports_cuda   = false;
+		cpu_device.is_cpu          = true;
 		return cpu_device;
 	} else {
-		std::cout << "OpenCL devices:" << std::endl;
-		for (int i = 0; i < devices.size(); ++i) {
-			std::cout << "  Device #" << i << ": ";
-			gpu::printDeviceInfo(devices[i]);
+		if (verbose) {
+			std::cout << "OpenCL devices:" << std::endl;
+			for (int i = 0; i < devices.size(); ++i) {
+				std::cout << "  Device #" << i << ": ";
+				gpu::printDeviceInfo(devices[i]);
+			}
 		}
-		if (devices.size() == 1) {
+		{
 			device_index = 0;
-		} else {
-			if (argc != 2) {
-				std::cerr << "Usage: <app> <args...> <OpenCLDeviceIndex>" << std::endl;
-				std::cerr << "	Where <OpenCLDeviceIndex> should be from 0 to " << (devices.size() - 1) << " (inclusive)" << std::endl;
-				throw std::runtime_error("Illegal arguments!");
-			} else {
-				device_index = atoi(argv[1]);
-				if (device_index >= devices.size()) {
-					std::cerr << "<OpenCLDeviceIndex> should be from 0 to " << (devices.size() - 1) << " (inclusive)! But " << argv[1] << " provided!" << std::endl;
-					throw std::runtime_error("Illegal arguments!");
+
+			// trying to find GPU (for cases when user has both GPU and CPU available as OpenCL/CUDA device)
+			for (size_t i = 0; i < devices.size(); ++i) {
+				if (!devices[i].is_cpu) {
+					device_index = i;
+					break;
 				}
 			}
 		}
-		std::cout << "Using device #" << device_index << ": ";
-		gpu::printDeviceInfo(devices[device_index]);
+		if (verbose) {
+			std::cout << "Using device #" << device_index << ": ";
+			gpu::printDeviceInfo(devices[device_index]);
+		}
 	}
 	return devices[device_index];
 }

@@ -20,6 +20,7 @@ public:
 
 	bool				supports_opencl;
 	bool				supports_cuda;
+	bool				is_cpu;
 
 	cl_device_id		device_id_opencl;
 	int					device_id_cuda;
