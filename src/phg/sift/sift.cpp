@@ -5,6 +5,8 @@
 
 #include <libutils/rasserts.h>
 
+#include <omp.h>
+
 // Ссылки:
 // [lowe04] - Distinctive Image Features from Scale-Invariant Keypoints,
 // David G. Lowe, 2004
@@ -107,6 +109,7 @@ void phg::SIFT::buildPyramids(const cv::Mat &imgOrg,
             gaussianPyramid[octave * OCTAVE_GAUSSIAN_IMAGES + layer] = img;
         }
 
+        //omp_set_num_threads(1);
         #pragma omp parallel for
 //        // TODO: если выполните TODO про "размытие из изначального слоя октавы"
 //        ниже - раскоментируйте это распараллеливание, ведь теперь слои
@@ -165,6 +168,7 @@ void phg::SIFT::buildPyramids(const cv::Mat &imgOrg,
     DoGPyramid.resize(NOCTAVES * OCTAVE_DOG_IMAGES);
 
     // строим пирамиду разниц гауссиан слоев (Difference of Gaussian, DoG), т.к. вычитать надо из слоя слой в рамках одной и той же октавы - то есть приятный параллелизм на уровне октав
+    //omp_set_num_threads(1);
     #pragma omp parallel for
     for (ptrdiff_t octave = 0; octave < NOCTAVES; ++octave) {
         for (size_t layer = 1; layer < OCTAVE_GAUSSIAN_IMAGES; ++layer) {
@@ -238,6 +242,7 @@ void phg::SIFT::findLocalExtremasAndDescribe(
     std::vector<std::vector<float>> pointsDesc;
 
     // 3.1 Local extrema detection
+    //omp_set_num_threads(1);
     #pragma omp parallel // запустили каждый вычислительный поток процессора
     {
         // каждый поток будет складировать свои точки в свой личный вектор (чтобы не было гонок и не были нужны точки синхронизации)
@@ -253,6 +258,7 @@ void phg::SIFT::findLocalExtremasAndDescribe(
                 const cv::Mat DoGs[3] = {prev, cur, next};
 
                 // теперь каждый поток обработает свой кусок картинки
+                //omp_set_num_threads(1);
                 #pragma omp for
                 for (ptrdiff_t j = 1; j < cur.rows - 1; ++j) {
                     for (ptrdiff_t i = 1; i + 1 < cur.cols; ++i) {
