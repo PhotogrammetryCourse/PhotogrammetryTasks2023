@@ -118,13 +118,11 @@ void evaluateDetection(const cv::Mat &M, double minRecall, cv::Mat img0=cv::Mat(
                 detector->compute(img0, kps0, desc0);
                 detector->compute(img1, kps1, desc1);
             } else if (method == 2) {
-                // TODO remove 'return' and uncomment
-                return;
-//                method_name = "SIFT_MY";
-//                log_prefix = "[SIFT_MY] ";
-//                phg::SIFT mySIFT;
-//                mySIFT.detectAndCompute(img0, kps0, desc0);
-//                mySIFT.detectAndCompute(img1, kps1, desc1);
+                method_name = "SIFT_MY";
+                log_prefix = "[SIFT_MY] ";
+                phg::SIFT mySIFT;
+                mySIFT.detectAndCompute(img0, kps0, desc0);
+                mySIFT.detectAndCompute(img1, kps1, desc1);
             } else {
                 rassert(false, 13532513412); // это не проверка как часть тестирования, это проверка что число итераций в цикле и if-else ветки все еще согласованы и не разошлись
             }
