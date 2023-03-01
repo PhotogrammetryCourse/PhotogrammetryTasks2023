@@ -24,7 +24,7 @@
 #define INITIAL_IMG_SIGMA           0.75                 // предполагаемая степень размытия изначальной картинки
 #define INPUT_IMG_PRE_BLUR_SIGMA    1.0                  // сглаживание изначальной картинки
    
-#define SUBPIXEL_FITTING_ENABLE      0    // такие тумблеры включающие/выключающие очередное улучшение алгоритма позволяют оценить какой вклад эта фича вносит в качество результата если в рамках уже готового алгоритма попробовать ее включить/выключить
+#define SUBPIXEL_FITTING_ENABLE      1    // такие тумблеры включающие/выключающие очередное улучшение алгоритма позволяют оценить какой вклад эта фича вносит в качество результата если в рамках уже готового алгоритма попробовать ее включить/выключить
 
 #define ORIENTATION_NHISTS           36   // число корзин при определении ориентации ключевой точки через гистограммы
 #define ORIENTATION_WINDOW_R         3    // минимальный радиус окна в рамках которого будет выбрана ориентиация (в пикселях), R=3 => 5x5 окно
@@ -34,7 +34,6 @@
 #define DESCRIPTOR_NBINS           8 // 8 корзин-направлений в каждой гистограмме дескриптора (4х4 гистограммы, каждая по 8 корзин, итого 4x4x8=128 значений в дескрипторе)
 #define DESCRIPTOR_SAMPLES_N       4 // 4x4 замера для каждой гистограммы дескриптора (всего гистограмм 4х4) итого 16х16 замеров
 #define DESCRIPTOR_SAMPLE_WINDOW_R 1.0 // минимальный радиус окна в рамках которого строится гистограмма из 8 корзин-направлений (т.е. для каждого из 16 элементов дескриптора), R=1 => 1x1 окно
-
 
 void phg::SIFT::detectAndCompute(const cv::Mat &originalImg, std::vector<cv::KeyPoint> &kps, cv::Mat &desc) {
     // используйте дебаг в файлы как можно больше, это очень удобно и потраченное время окупается крайне сильно,
@@ -61,8 +60,7 @@ void phg::SIFT::detectAndCompute(const cv::Mat &originalImg, std::vector<cv::Key
     std::vector<cv::Mat> gaussianPyramid;
     std::vector<cv::Mat> DoGPyramid;
     buildPyramids(img, gaussianPyramid, DoGPyramid);
-
-    findLocalExtremasAndDescribe(gaussianPyramid, DoGPyramid, kps, desc);
+    findLocalExtremasAndDescribe(gaussianPyramid, DoGPyramid, kps, desc);    
 }
 
 void phg::SIFT::buildPyramids(const cv::Mat &imgOrg, std::vector<cv::Mat> &gaussianPyramid, std::vector<cv::Mat> &DoGPyramid) {
@@ -78,21 +76,17 @@ void phg::SIFT::buildPyramids(const cv::Mat &imgOrg, std::vector<cv::Mat> &gauss
         } else {
             int layer = 0;
             size_t prevOctave = octave - 1;
+            // TODO (DONE)
             // берем картинку с предыдущей октавы и уменьшаем ее в два раза без какого бы то ни было дополнительного размытия (сигмы должны совпадать)
-            // cv::Mat img = gaussianPyramid[ TODO ].clone();
+            cv::Mat img = gaussianPyramid[ prevOctave  * OCTAVE_GAUSSIAN_IMAGES + layer ].clone();
             // тут есть очень важный момент, мы должны указать fx=0.5, fy=0.5 иначе при нечетном размере картинка будет не идеально 2 пикселя в один схлопываться - а слегка смещаться
-            // cv::resize(img, img, cv::Size( TODO , TODO ), 0.5, 0.5, cv::INTER_NEAREST);
-            // gaussianPyramid[octave * OCTAVE_GAUSSIAN_IMAGES + layer] = img;
+            cv::resize(img, img, cv::Size( (img.rows + 1) / 2 , (img.cols + 1) / 2 ), 0.5, 0.5, cv::INTER_NEAREST);
+            gaussianPyramid[octave * OCTAVE_GAUSSIAN_IMAGES + layer] = img;
         }
 
-//        #pragma omp parallel for // TODO: если выполните TODO про "размытие из изначального слоя октавы" ниже - раскоментируйте это распараллеливание, ведь теперь слои считаются независимо (из самого первого), проверьте что результат на картинках не изменился
+        #pragma omp parallel for // TODO: если выполните TODO про "размытие из изначального слоя октавы" ниже - раскоментируйте это распараллеливание, ведь теперь слои считаются независимо (из самого первого), проверьте что результат на картинках не изменился
         for (ptrdiff_t layer = 1; layer < OCTAVE_GAUSSIAN_IMAGES; ++layer) {
-            size_t prevLayer = layer - 1;
-
             // если есть два последовательных гауссовых размытия с sigma1 и sigma2, то результат будет с sigma12=sqrt(sigma1^2 + sigma2^2) => sigma2=sqrt(sigma12^2-sigma1^2)
-            double sigmaPrev = INITIAL_IMG_SIGMA * pow(2.0, octave) * pow(k, prevLayer); // sigma1  - сигма до которой дошла картинка на предыдущем слое
-            double sigmaCur  = INITIAL_IMG_SIGMA * pow(2.0, octave) * pow(k, layer);     // sigma12 - сигма до которой мы хотим дойти на текущем слое
-            double sigma = sqrt(sigmaCur*sigmaCur - sigmaPrev*sigmaPrev);                // sigma2  - сигма которую надо добавить чтобы довести sigma1 до sigma12
             // посмотрите внимательно на формулу выше и решите как по мнению этой формулы соотносится сигма у первого А-слоя i-ой октавы
             // и сигма у одного из последних слоев Б предыдущей (i-1)-ой октавы из которого этот слой А был получен?
             // а как чисто идейно должны бы соотноситься сигмы размытия у двух картинок если картинка А была получена из картинки Б простым уменьшением в 2 раза?
@@ -100,11 +94,10 @@ void phg::SIFT::buildPyramids(const cv::Mat &imgOrg, std::vector<cv::Mat> &gauss
             // TODO: переделайте это добавочное размытие с варианта "размываем предыдущий слой" на вариант "размываем самый первый слой октавы до степени размытия сигмы нашего текущего слоя"
             // проверьте - картинки отладочного вывода выглядят один-в-один до/после? (посмотрите на них туда-сюда быстро мигая)
 
-            cv::Mat imgLayer = gaussianPyramid[octave * OCTAVE_GAUSSIAN_IMAGES + prevLayer].clone();
+            double sigma_layer = INITIAL_IMG_SIGMA * sqrt(pow(k, 2.0 * layer) - 1.0) * pow(2.0, octave);
+            cv::Mat imgLayer = gaussianPyramid[octave * OCTAVE_GAUSSIAN_IMAGES].clone();
             cv::Size automaticKernelSize = cv::Size(0, 0);
-
-            cv::GaussianBlur(imgLayer, imgLayer, automaticKernelSize, sigma, sigma);
-
+            cv::GaussianBlur(imgLayer, imgLayer, automaticKernelSize, sigma_layer, sigma_layer);
             gaussianPyramid[octave * OCTAVE_GAUSSIAN_IMAGES + layer] = imgLayer;
         }
     }
@@ -174,6 +167,14 @@ namespace {
         float shift = - b / (2.0f * a) - 1.0f;
         return shift;
     }
+
+    void parabolaFittingVals(float x0, float x1, float x2, float &shift, float &value) {
+        rassert((x1 >= x0 && x1 >= x2) || (x1 <= x0 && x1 <= x2), 12541241241241);
+        float a = (x2-2.0f*x1+x0) / 2.0f;
+        float b = x1 - x0 - a;
+        shift = - b / (2.0f * a) - 1.0f;
+        value = a * shift * shift + b * shift + x0;
+    }
 }
 
 void phg::SIFT::findLocalExtremasAndDescribe(const std::vector<cv::Mat> &gaussianPyramid, const std::vector<cv::Mat> &DoGPyramid,
@@ -203,14 +204,16 @@ void phg::SIFT::findLocalExtremasAndDescribe(const std::vector<cv::Mat> &gaussia
                         bool is_min = true;
                         float center = DoGs[1].at<float>(j, i);
                         for (int dz = -1; dz <= 1 && (is_min || is_max); ++dz) {
-                        for (int dy = -1; dy <= 1 && (is_min || is_max); ++dy) {
-                        for (int dx = -1; dx <= 1 && (is_min || is_max); ++dx) {
-                            // TODO проверить является ли наш центр все еще экстремум по сравнению с соседом DoGs[1+dz].at<float>(j+dy, i+dx) ? (не забудьте учесть что один из соседов - это мы сами)
-                        }
-                        }
+                            for (int dy = -1; dy <= 1 && (is_min || is_max); ++dy) {
+                                for (int dx = -1; dx <= 1 && (is_min || is_max); ++dx) {
+                                    // TODO (DONE) проверить является ли наш центр все еще экстремум по сравнению с соседом DoGs[1+dz].at<float>(j+dy, i+dx) ? (не забудьте учесть что один из соседов - это мы сами)
+                                    is_max &= DoGs[1+dz].at<float>(j+dy, i+dx) <= center;
+                                    is_min &= DoGs[1+dz].at<float>(j+dy, i+dx) >= center;
+                                }
+                            }
                         }
                         bool is_extremum = (is_min || is_max);
-
+                        
                         if (!is_extremum)
                             continue; // очередной элемент cascade filtering, если не экстремум - сразу заканчиваем обработку этого пикселя
 
@@ -222,7 +225,10 @@ void phg::SIFT::findLocalExtremasAndDescribe(const std::vector<cv::Mat> &gaussia
                         // TODO сделать субпиксельное уточнение (хотя бы через параболу-фиттинг независимо по оси X и оси Y, но лучше через честный ряд Тейлора, матрицу Гессе и итеративное смещение если экстремум оказался в соседнем пикселе)
 #if SUBPIXEL_FITTING_ENABLE // такие тумблеры включающие/выключающие очередное улучшение алгоритма позволяют оценить какой вклад эта фича вносит в качество результата если в рамках уже готового алгоритма попробовать ее включить/выключить
                         {
-                            // TODO
+                            parabolaFittingVals(DoGs[1].at<float>(j, i - 1), DoGs[1].at<float>(j, i), DoGs[1].at<float>(j, i + 1), dx, dvalue);
+                            float tmp_dvalue;
+                            parabolaFittingVals(DoGs[1].at<float>(j + 1, i), DoGs[1].at<float>(j, i), DoGs[1].at<float>(j + 1, i), dy, tmp_dvalue);
+                            dvalue += tmp_dvalue;
                         }
 #endif
                         // TODO сделать фильтрацию слабых точек по слабому контрасту
@@ -252,7 +258,7 @@ void phg::SIFT::findLocalExtremasAndDescribe(const std::vector<cv::Mat> &gaussia
                             float nextValue = votes[(bin + 1) % ORIENTATION_NHISTS];
                             if (value > prevValue && value > nextValue && votes[bin] > biggestVote * ORIENTATION_VOTES_PEAK_RATIO) {
                                 // TODO добавьте уточнение угла наклона - может помочь определенная выше функция parabolaFitting(float x0, float x1, float x2)
-                                kp.angle = (bin + 0.5) * (360.0 / ORIENTATION_NHISTS);
+                                kp.angle = (parabolaFitting(prevValue, value, nextValue) + 0.5) * (360.0 / ORIENTATION_NHISTS);
                                 rassert(kp.angle >= 0.0 && kp.angle <= 360.0, 123512412412);
                                 
                                 std::vector<float> descriptor;
@@ -301,20 +307,22 @@ bool phg::SIFT::buildLocalOrientationHists(const cv::Mat &img, size_t i, size_t 
     for (size_t y = j - radius + 1; y < j + radius; ++y) {
         for (size_t x = i - radius + 1; x < i + radius; ++x) {
             // m(x, y)=(L(x + 1, y) − L(x − 1, y))^2 + (L(x, y + 1) − L(x, y − 1))^2
-            // double magnitude = TODO
+            float dx = img.at<float>(y, x - 1) - img.at<float>(y, x + 1);
+            float dy = img.at<float>(y - 1, x) - img.at<float>(y + 1, x);
+            double magnitude = dx*dx + dy*dy;
 
-            // orientation == theta
-            // atan( (L(x, y + 1) − L(x, y − 1)) / (L(x + 1, y) − L(x − 1, y)) )
-            // double orientation = TODO // подсказка - используйте atan2(dy, dx)
-//            orientation = orientation * 180.0 / M_PI;
-//            orientation = (orientation + 90.0);
-//            if (orientation <  0.0)   orientation += 360.0;
-//            if (orientation >= 360.0) orientation -= 360.0;
-//            rassert(orientation >= 0.0 && orientation < 360.0, 5361615612);
-//            static_assert(360 % ORIENTATION_NHISTS == 0, "Inappropriate bins number!");
-//            size_t bin = TODO
-//            rassert(bin < ORIENTATION_NHISTS, 361236315613);
-//            sum[bin] += magnitude;
+            // orientation == theta 
+            //  atan( (L(x, y + 1) − L(x, y − 1)) / (L(x + 1, y) − L(x − 1, y)) )
+            double orientation = atan2(dy, dx); // подсказка - используйте atan2(dy, dx)
+            orientation = orientation * 180.0 / M_PI;
+            orientation = (orientation + 90.0);
+            if (orientation <  0.0)   orientation += 360.0;
+            if (orientation >= 360.0) orientation -= 360.0;
+            rassert(orientation >= 0.0 && orientation < 360.0, 5361615612);
+            static_assert(360 % ORIENTATION_NHISTS == 0, "Inappropriate bins number!");
+            size_t bin = orientation * ORIENTATION_NHISTS / 360.0;
+            rassert(bin < ORIENTATION_NHISTS, 361236315613);
+            sum[bin] += magnitude;
             // TODO может быть сгладить получившиеся гистограммы улучшит результат? 
         }
     }
@@ -343,40 +351,52 @@ bool phg::SIFT::buildDescriptor(const cv::Mat &img, float px, float py, double d
                 for (int smpi = 0; smpi < DESCRIPTOR_SAMPLES_N; ++smpi) { // перебираем столбик очередного замера для текущей гистограммы
                     for (int smpy = 0; smpy < smpW; ++smpy) { // перебираем ряд пикселей текущего замера
                         for (int smpx = 0; smpx < smpW; ++smpx) { // перебираем столбик пикселей текущего замера
-//                            cv::Point2f shift(((-DESCRIPTOR_SIZE/2.0 + hsti) * DESCRIPTOR_SAMPLES_N + smpi) * smpW, TODO);
-//                            std::vector<cv::Point2f> shiftInVector(1, shift);
-//                            cv::transform(shiftInVector, shiftInVector, relativeShiftRotation); // преобразуем относительный сдвиг с учетом ориентации ключевой точки
-//                            shift = shiftInVector[0];
+                            // TODO (DONE)
+                            cv::Point2f shift(((-DESCRIPTOR_SIZE/2.0 + hsti) * DESCRIPTOR_SAMPLES_N + smpi) * smpW,
+                                              ((-DESCRIPTOR_SIZE/2.0 + hstj) * DESCRIPTOR_SAMPLES_N + smpj) * smpW);
+                            std::vector<cv::Point2f> shiftInVector(1, shift);
+                            cv::transform(shiftInVector, shiftInVector, relativeShiftRotation); // преобразуем относительный сдвиг с учетом ориентации ключевой точки
+                            shift = shiftInVector[0];
 
-//                            int x = (int) (px + shift.x);
-//                            int y = TODO;
+                            int x = (int) (px + shift.x);
+                            int y = (int) (py + shift.y);
 
-//                            if (y - 1 < 0 || y + 1 > img.rows || x - 1 < 0 || x + 1 > img.cols)
-//                                return false;
+                            if (y - 1 < 0 || y + 1 >= img.rows || x - 1 < 0 || x + 1 >= img.cols)
+                                return false;
 
-//                            double magnitude = TODO
+                            double dx = img.at<float>(y, x + 1) - img.at<float>(y, x - 1);
+                            double dy = img.at<float>(y + 1, x) - img.at<float>(y - 1, x);
+                            double magnitude = dx*dx + dy*dy;
 
-//                            double orientation = atan2(TODO);
-//                            orientation = orientation * 180.0 / M_PI;
-//                            orientation = (orientation + 90.0);
-//                            if (orientation <  0.0)   orientation += 360.0;
-//                            if (orientation >= 360.0) orientation -= 360.0;
+                            double orientation = atan2(dy, dx);
+                            orientation = orientation * 180.0 / M_PI;
+                            orientation = (orientation + 90.0 - angle);
+                            if (orientation <  0.0)   orientation += 360.0;
+                            if (orientation >= 360.0) orientation -= 360.0;
 
-                              // TODO за счет чего этот вклад будет сравниваться с этим же вкладом даже если эта картинка будет повернута? что нужно сделать с ориентацией каждого градиента из окрестности этой ключевой точки?
-
-//                            rassert(orientation >= 0.0 && orientation < 360.0, 3515215125412);
+                            // TODO за счет чего этот вклад будет сравниваться с этим же вкладом даже если эта картинка будет повернута? что нужно сделать с ориентацией каждого градиента из окрестности этой ключевой точки?
+                            rassert(orientation >= 0.0 && orientation < 360.0, 3515215125412);
                             static_assert(360 % DESCRIPTOR_NBINS == 0, "Inappropriate bins number!");
-//                            size_t bin = TODO;
-//                            rassert(bin < DESCRIPTOR_NBINS, 361236315613);
-//                            sum[bin] += magnitude;
+                            size_t bin = orientation * DESCRIPTOR_NBINS / 360.0;
+                            rassert(bin < DESCRIPTOR_NBINS, 361236315613);
+                            sum[bin] += magnitude;
                             // TODO хорошая идея добавить трилинейную интерполяцию как предложено в статье, или хотя бы сэмулировать ее - сгладить получившиеся гистограммы
+                            sum[(bin + 1) % ORIENTATION_NHISTS] += 0.05 * magnitude;
+                            sum[(bin + ORIENTATION_NHISTS - 1) % ORIENTATION_NHISTS] += 0.05 * magnitude;
                         }
                     }
                 }
             }
 
             // TODO нормализовать наш вектор дескриптор (подсказка: посчитать его длину и поделить каждую компоненту на эту длину)
-
+            float len = 0.0;
+            for (int bin = 0; bin < DESCRIPTOR_NBINS; ++bin) {
+                len += sum[bin] * sum[bin];
+            }
+            len = sqrt(len);
+            for (int bin = 0; bin < DESCRIPTOR_NBINS; ++bin) {
+                sum[bin] /= len;
+            }
             float *votes = &(descriptor[(hstj * DESCRIPTOR_SIZE + hsti) * DESCRIPTOR_NBINS]); // нашли где будут лежать корзины нашей гистограммы
             for (int bin = 0; bin < DESCRIPTOR_NBINS; ++bin) {
                 votes[bin] = sum[bin];
