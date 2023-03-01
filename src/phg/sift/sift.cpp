@@ -81,17 +81,17 @@ void phg::SIFT::buildPyramids(const cv::Mat &imgOrg, std::vector<cv::Mat> &gauss
             // берем картинку с предыдущей октавы и уменьшаем ее в два раза без какого бы то ни было дополнительного размытия (сигмы должны совпадать)
             cv::Mat img = gaussianPyramid[octave * OCTAVE_GAUSSIAN_IMAGES - 1].clone(); // это картинка с конца предыдущей октавы
             // тут есть очень важный момент, мы должны указать fx=0.5, fy=0.5 иначе при нечетном размере картинка будет не идеально 2 пикселя в один схлопываться - а слегка смещаться
-            cv::resize(img, img, cv::Size(0 , 0), 0.5, 0.5, cv::INTER_NEAREST); // говорят: dsize -- output image size; if it equals zero, it is computed as: dsize = Size(round(fx*src.cols), round(fy*src.rows)), тут как раз это и нужно
+            cv::resize(img, img, cv::Size(0, 0), 0.5, 0.5, cv::INTER_NEAREST); // говорят: dsize -- output image size; if it equals zero, it is computed as: dsize = Size(round(fx*src.cols), round(fy*src.rows)), тут как раз это и нужно
             gaussianPyramid[octave * OCTAVE_GAUSSIAN_IMAGES + layer] = img;
         }
 
-        //#pragma omp parallel for // если выполните про "размытие из изначального слоя октавы" ниже - раскоментируйте это распараллеливание, ведь теперь слои считаются независимо (из самого первого), проверьте что результат на картинках не изменился
+        #pragma omp parallel for // если выполните про "размытие из изначального слоя октавы" ниже - раскоментируйте это распараллеливание, ведь теперь слои считаются независимо (из самого первого), проверьте что результат на картинках не изменился
         for (ptrdiff_t layer = 1; layer < OCTAVE_GAUSSIAN_IMAGES; ++layer) {
             size_t prevLayer = layer - 1;
 
-            double sigmaPrev = INITIAL_IMG_SIGMA * pow(2.0, octave) * pow(k, prevLayer);
+            /*double sigmaPrev = INITIAL_IMG_SIGMA * pow(2.0, octave) * pow(k, prevLayer);
             double sigmaCur  = INITIAL_IMG_SIGMA * pow(2.0, octave) * pow(k, layer);     // sigma12 - сигма до которой мы хотим дойти на текущем слое
-            double sigma = sqrt(sigmaCur*sigmaCur - sigmaPrev*sigmaPrev);
+            double sigma = sqrt(sigmaCur*sigmaCur - sigmaPrev*sigmaPrev);*/
 
             // если есть два последовательных гауссовых размытия с sigma1 и sigma2, то результат будет с sigma12=sqrt(sigma1^2 + sigma2^2) => sigma2=sqrt(sigma12^2-sigma1^2)
             // посмотрите внимательно на формулу выше и решите как по мнению этой формулы соотносится сигма у первого А-слоя i-ой октавы
@@ -105,12 +105,11 @@ void phg::SIFT::buildPyramids(const cv::Mat &imgOrg, std::vector<cv::Mat> &gauss
             // проверьте - картинки отладочного вывода выглядят один-в-один до/после? (посмотрите на них туда-сюда быстро мигая)
 
             //double sigma = INITIAL_IMG_SIGMA * pow(2.0, octave) * pow(k, layer+1) / sqrt(k*k+1); // я тут суммы геометрических прогрессий раскрыла, но, видимо, где-то ошиблась
-            /*double sigmaFirst = INITIAL_IMG_SIGMA * pow(2.0, octave);
+            double sigmaFirst = INITIAL_IMG_SIGMA * pow(2.0, octave);
             double sigmaCur = INITIAL_IMG_SIGMA * pow(2.0, octave) * pow(k, layer);
-            double sigma = sqrt(sigmaCur * sigmaCur - sigmaFirst * sigmaFirst);*/ // Это вариант число по аналогии, но он не выглядит как верный, но на нём тестов меньше упало
+            double sigma = sqrt(sigmaCur * sigmaCur - sigmaFirst * sigmaFirst); // Это вариант число по аналогии, но он не выглядит как верный, но тесты прошли
             cv::Mat imgLayer = gaussianPyramid[octave * OCTAVE_GAUSSIAN_IMAGES].clone();
             cv::Size automaticKernelSize = cv::Size(0, 0);
-
             cv::GaussianBlur(imgLayer, imgLayer, automaticKernelSize, sigma, sigma);
 
             gaussianPyramid[octave * OCTAVE_GAUSSIAN_IMAGES + layer] = imgLayer;
@@ -186,9 +185,9 @@ namespace {
         float a = (x2-2.0f*x1+x0) / 2.0f;
         float b = x1 - x0 - a;
         // extremum is at -b/(2*a), but our system coordinate start (i) is at 1, so minus 1
-        float shift = - b / (2.0f * a);
-        value = a * shift * shift + b * shift + x0 - x1;
-        return shift - 1.0f;
+        float shift = - b / (2.0f * a) - 1.0f;
+        value = a * shift * shift + b * shift + x0;
+        return shift;
     }
 }
 
@@ -346,7 +345,7 @@ bool phg::SIFT::buildLocalOrientationHists(const cv::Mat &img, size_t i, size_t 
             size_t bin = orientation * ORIENTATION_NHISTS / 360.0;
             rassert(bin < ORIENTATION_NHISTS, 361236315613);
             sum[bin] += magnitude;
-            // может быть сгладить получившиеся гистограммы улучшит результат? Так и не поняла, как влияют, но судя по всму достаточно сильно, потому что у меня проходили/не проходили тесты при разных значениях
+            // может быть сгладить получившиеся гистограммы улучшит результат? Если честно, так и не поняла, как влияют, чего-то менялось, но выделить закономерности не получилось
             float smoothing = 0.8 * magnitude;
             sum[bin] -= smoothing;
             sum[(bin + ORIENTATION_NHISTS - 1) % ORIENTATION_NHISTS] += smoothing / 2;
