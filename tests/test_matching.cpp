@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <iostream>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
@@ -13,6 +14,7 @@
 #include <libutils/timer.h>
 #include <phg/sfm/panorama_stitcher.h>
 #include <phg/matching/gms_matcher.h>
+#include <stdexcept>
 
 
 #include "utils/test_utils.h"
@@ -20,7 +22,7 @@
 
 // TODO enable both toggles for testing custom detector & matcher
 #define ENABLE_MY_DESCRIPTOR 0
-#define ENABLE_MY_MATCHING 0
+#define ENABLE_MY_MATCHING 1
 #define ENABLE_GPU_BRUTEFORCE_MATCHER 0
 
 #if ENABLE_MY_MATCHING
