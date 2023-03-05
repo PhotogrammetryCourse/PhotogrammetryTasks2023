@@ -35,7 +35,7 @@ void dfs(
 
 
 cv::Point2d applyH(cv::Point2d pt, cv::Mat &h) {
-    return phg::transformPoint(pt, h.inv());
+    return phg::transformPoint(pt, h);
 }
 
 
