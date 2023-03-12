@@ -20,7 +20,7 @@
 
 // TODO enable both toggles for testing custom detector & matcher
 #define ENABLE_MY_DESCRIPTOR 0
-#define ENABLE_MY_MATCHING 0
+#define ENABLE_MY_MATCHING 1
 #define ENABLE_GPU_BRUTEFORCE_MATCHER 0
 
 #if ENABLE_MY_MATCHING
@@ -161,6 +161,7 @@ namespace {
         keypoints_rmse = 0;
         for (int i = 0; i < (int) good_matches.size(); ++i) {
 #if ENABLE_MY_MATCHING
+            std::cout << "transform" << std::endl;
             cv::Point2f pt = phg::transformPoint(points1[i], H);
 #else
             cv::Point2f pt = phg::transformPointCV(points1[i], H);
@@ -177,6 +178,7 @@ namespace {
             for (int x = 0; x < img1.cols; ++x) {
                 cv::Vec3b col1 = img1.at<cv::Vec3b>(y, x);
 #if ENABLE_MY_MATCHING
+                std::cout << "transform point " << y  << " : " << x << std::endl;
                 cv::Point2f pt = phg::transformPoint(cv::Point2f(x, y), H);
 #else
                 cv::Point2f pt = phg::transformPointCV(cv::Point2f(x, y), H);
@@ -207,6 +209,7 @@ namespace {
     void testStitching(const cv::Mat &img1, const cv::Mat &img2, const std::vector<cv::KeyPoint> &keypoints1, const std::vector<cv::KeyPoint> &keypoints2,
                        const cv::Mat &descriptors1, const cv::Mat &descriptors2)
     {
+        std::cout << "testStitching" << std::endl;
         double rmse_kpts, rmse_color;
         evaluateStitching(img1, img2, rmse_kpts, rmse_color, keypoints1, keypoints2, descriptors1, descriptors2);
 
