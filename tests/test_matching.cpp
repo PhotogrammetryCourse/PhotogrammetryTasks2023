@@ -20,7 +20,7 @@
 
 // TODO enable both toggles for testing custom detector & matcher
 #define ENABLE_MY_DESCRIPTOR 0
-#define ENABLE_MY_MATCHING 0
+#define ENABLE_MY_MATCHING 1
 #define ENABLE_GPU_BRUTEFORCE_MATCHER 0
 
 #if ENABLE_MY_MATCHING
@@ -248,6 +248,7 @@ TEST (MATCHING, SimpleStitching) {
 
     cv::Mat img1 = cv::imread("data/src/test_matching/hiking_left.JPG");
     cv::Mat img2 = cv::imread("data/src/test_matching/hiking_right.JPG");
+
 
     testStitchingMultipleDetectors(img1, img2);
 }
@@ -750,6 +751,7 @@ TEST (STITCHING, SimplePanorama) {
 
     std::function<cv::Mat(const cv::Mat&, const cv::Mat&)> homography_builder = [](const cv::Mat &lhs, const cv::Mat &rhs){ return getHomography(lhs, rhs); };
     cv::Mat pano = phg::stitchPanorama({img1, img2}, {-1, 0}, homography_builder);
+
     cv::imwrite("data/debug/test_matching/" + getTestSuiteName() + "_" + getTestName() + "_" + "panorama.png", pano);
 #endif
 }
