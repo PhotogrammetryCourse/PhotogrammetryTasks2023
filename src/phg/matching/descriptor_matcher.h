@@ -3,6 +3,7 @@
 #include <opencv2/core.hpp>
 
 namespace phg {
+    const float K_RATIO = 0.6;
 
     struct DescriptorMatcher {
 
