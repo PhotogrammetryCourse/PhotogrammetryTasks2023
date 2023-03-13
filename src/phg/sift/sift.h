@@ -10,7 +10,7 @@ namespace phg {
     class SIFT {
     public:
         // Можете добавить дополнительных параметров со значениями по умолчанию в конструктор если хотите
-        SIFT(double contrast_threshold = 0.5) : contrast_threshold(contrast_threshold) {}
+        SIFT(double contrast_threshold = 2) : contrast_threshold(contrast_threshold) {}
 
         // Сигнатуру этого метода менять нельзя
         void detectAndCompute(const cv::Mat &originalImg, std::vector<cv::KeyPoint> &kps, cv::Mat &desc);

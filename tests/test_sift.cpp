@@ -85,9 +85,9 @@ void evaluateDetection(const cv::Mat &M, double minRecall, cv::Mat img0=cv::Mat(
     cv::randn(noise, cv::Scalar::all(0), cv::Scalar::all(GAUSSIAN_NOISE_STDDEV));
     cv::add(transformedImage, noise, transformedImage); // добавляем к преобразованной картинке гауссиан шума
     cv::Mat img1 = transformedImage;
-
+    printf("!!!!");
     {
-        for (int method = 0; method < 3; ++method) { // тестируем три метода: OpenCV ORB, OpenCV SIFT, ваш SIFT
+        for (int method = 2; method < 3; ++method) { // тестируем три метода: OpenCV ORB, OpenCV SIFT, ваш SIFT
             std::vector<cv::KeyPoint> kps0;
             std::vector<cv::KeyPoint> kps1;
 
@@ -119,12 +119,12 @@ void evaluateDetection(const cv::Mat &M, double minRecall, cv::Mat img0=cv::Mat(
                 detector->compute(img1, kps1, desc1);
             } else if (method == 2) {
                 // TODO remove 'return' and uncomment
-                return;
-//                method_name = "SIFT_MY";
-//                log_prefix = "[SIFT_MY] ";
-//                phg::SIFT mySIFT;
-//                mySIFT.detectAndCompute(img0, kps0, desc0);
-//                mySIFT.detectAndCompute(img1, kps1, desc1);
+                //return;
+                method_name = "SIFT_MY";
+                log_prefix = "[SIFT_MY] ";
+                phg::SIFT mySIFT;
+                mySIFT.detectAndCompute(img0, kps0, desc0);
+                mySIFT.detectAndCompute(img1, kps1, desc1);
             } else {
                 rassert(false, 13532513412); // это не проверка как часть тестирования, это проверка что число итераций в цикле и if-else ветки все еще согласованы и не разошлись
             }

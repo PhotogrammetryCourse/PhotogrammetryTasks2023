@@ -17,10 +17,12 @@
 
 #include "utils/test_utils.h"
 
+#define DEBUG_ENABLE     0
+#define DEBUG_PATH       std::string("data/debug/test_matching/debug/")
 
 // TODO enable both toggles for testing custom detector & matcher
 #define ENABLE_MY_DESCRIPTOR 0
-#define ENABLE_MY_MATCHING 0
+#define ENABLE_MY_MATCHING 1
 #define ENABLE_GPU_BRUTEFORCE_MATCHER 0
 
 #if ENABLE_MY_MATCHING
@@ -248,6 +250,8 @@ TEST (MATCHING, SimpleStitching) {
 
     cv::Mat img1 = cv::imread("data/src/test_matching/hiking_left.JPG");
     cv::Mat img2 = cv::imread("data/src/test_matching/hiking_right.JPG");
+
+    if (DEBUG_ENABLE) cv::imwrite(DEBUG_PATH + "img1.png", img1);
 
     testStitchingMultipleDetectors(img1, img2);
 }
